@@ -1,0 +1,4 @@
+-lib astar
+-cp src/
+-main Main
+-js build.js
