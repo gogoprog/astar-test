@@ -604,77 +604,53 @@ astar_Graph.prototype = {
 			return;
 		}
 		var neighborVal = this.world[neighborY1 * this.width + neighborX1];
-		var cv = this.world[neighborY1 * this.width + neighborX1];
-		var hasCostInDirection = this.costs.h.hasOwnProperty(cv) && this.costs.h[cv].h.hasOwnProperty(direction);
+		var x = node.x;
+		var y = node.y;
+		var neighborX2;
+		switch(direction) {
+		case 4:case 32:case 128:
+			neighborX2 = 1;
+			break;
+		case 2:case 16:case 64:
+			neighborX2 = -1;
+			break;
+		default:
+			neighborX2 = 0;
+		}
+		var neighborX3 = x + neighborX2;
+		var neighborY2;
+		switch(direction) {
+		case 1:case 16:case 32:
+			neighborY2 = 1;
+			break;
+		case 8:case 64:case 128:
+			neighborY2 = -1;
+			break;
+		default:
+			neighborY2 = 0;
+		}
+		var neighborY3 = y + neighborY2;
 		var tmp;
-		if(!hasCostInDirection) {
+		if(!(neighborX3 >= 0 && neighborX3 < this.width && neighborY3 >= 0 && neighborY3 < this.height && this.costs.h.hasOwnProperty(this.world[neighborY3 * this.width + neighborX3]))) {
+			tmp = false;
+		} else if(!this.costs.h[this.world[neighborY3 * this.width + neighborX3]].h.hasOwnProperty(direction)) {
 			tmp = false;
 		} else if((direction & (16 | 32 | 64 | 128)) <= 0) {
 			tmp = true;
-		} else if(this.movementDirection == 2) {
-			tmp = true;
-		} else if(this.movementDirection == 4) {
-			var x;
-			switch(direction) {
-			case 4:case 32:case 128:
-				x = 1;
-				break;
-			case 2:case 16:case 64:
-				x = -1;
-				break;
-			default:
-				x = 0;
-			}
-			var x1 = neighborX1 + x;
-			if(!(x1 >= 0 && x1 < this.width && neighborY1 >= 0 && neighborY1 < this.height && this.costs.h.hasOwnProperty(this.world[neighborY1 * this.width + x1]))) {
-				var y;
-				switch(direction) {
-				case 1:case 16:case 32:
-					y = 1;
-					break;
-				case 8:case 64:case 128:
-					y = -1;
-					break;
-				default:
-					y = 0;
-				}
-				var y1 = neighborY1 + y;
-				tmp = neighborX1 >= 0 && neighborX1 < this.width && y1 >= 0 && y1 < this.height && this.costs.h.hasOwnProperty(this.world[y1 * this.width + neighborX1]);
-			} else {
-				tmp = true;
-			}
-		} else if(this.movementDirection == 8) {
-			var x2;
-			switch(direction) {
-			case 4:case 32:case 128:
-				x2 = 1;
-				break;
-			case 2:case 16:case 64:
-				x2 = -1;
-				break;
-			default:
-				x2 = 0;
-			}
-			var x3 = neighborX1 + x2;
-			if(x3 >= 0 && x3 < this.width && neighborY1 >= 0 && neighborY1 < this.height && this.costs.h.hasOwnProperty(this.world[neighborY1 * this.width + x3])) {
-				var y2;
-				switch(direction) {
-				case 1:case 16:case 32:
-					y2 = 1;
-					break;
-				case 8:case 64:case 128:
-					y2 = -1;
-					break;
-				default:
-					y2 = 0;
-				}
-				var y3 = neighborY1 + y2;
-				tmp = neighborX1 >= 0 && neighborX1 < this.width && y3 >= 0 && y3 < this.height && this.costs.h.hasOwnProperty(this.world[y3 * this.width + neighborX1]);
-			} else {
-				tmp = false;
-			}
 		} else {
-			throw new js__$Boot_HaxeError("Should not be here");
+			switch(this.movementDirection) {
+			case 2:
+				tmp = true;
+				break;
+			case 4:
+				tmp = neighborX3 >= 0 && neighborX3 < this.width && y >= 0 && y < this.height && this.costs.h.hasOwnProperty(this.world[y * this.width + neighborX3]) || x >= 0 && x < this.width && neighborY3 >= 0 && neighborY3 < this.height && this.costs.h.hasOwnProperty(this.world[neighborY3 * this.width + x]);
+				break;
+			case 8:
+				tmp = neighborX3 >= 0 && neighborX3 < this.width && y >= 0 && y < this.height && this.costs.h.hasOwnProperty(this.world[y * this.width + neighborX3]) && (x >= 0 && x < this.width && neighborY3 >= 0 && neighborY3 < this.height && this.costs.h.hasOwnProperty(this.world[neighborY3 * this.width + x]));
+				break;
+			default:
+				throw new js__$Boot_HaxeError("Checking a diagonal direction in FourWay movement.");
+			}
 		}
 		if(!tmp) {
 			return;
@@ -708,17 +684,17 @@ astar_Graph.prototype = {
 			} else {
 				this.openList.remove(existing);
 				var this2 = this.closedList;
-				var x4 = existing.x;
-				var y4 = existing.y;
+				var x1 = existing.x;
+				var y1 = existing.y;
 				var pool = this.nodePool;
-				if(x4 < this2.length && this2[x4] != null) {
-					if(pool != null && this2[x4][y4] != null) {
-						var node1 = this2[x4][y4];
+				if(x1 < this2.length && this2[x1] != null) {
+					if(pool != null && this2[x1][y1] != null) {
+						var node1 = this2[x1][y1];
 						node1.next = pool.head;
 						pool.head = node1;
 						pool.size++;
 					}
-					this2[x4][y4] = null;
+					this2[x1][y1] = null;
 				}
 			}
 		}
@@ -790,85 +766,68 @@ astar_Graph.prototype = {
 			return false;
 		}
 	}
-	,isCellPassableInDirection: function(x,y,direction) {
-		var cv = this.world[y * this.width + x];
-		var hasCostInDirection = this.costs.h.hasOwnProperty(cv) && this.costs.h[cv].h.hasOwnProperty(direction);
-		if(!hasCostInDirection) {
+	,canMoveFromCellInDirection: function(x,y,direction) {
+		var neighborX;
+		switch(direction) {
+		case 4:case 32:case 128:
+			neighborX = 1;
+			break;
+		case 2:case 16:case 64:
+			neighborX = -1;
+			break;
+		default:
+			neighborX = 0;
+		}
+		var neighborX1 = x + neighborX;
+		var neighborY;
+		switch(direction) {
+		case 1:case 16:case 32:
+			neighborY = 1;
+			break;
+		case 8:case 64:case 128:
+			neighborY = -1;
+			break;
+		default:
+			neighborY = 0;
+		}
+		var neighborY1 = y + neighborY;
+		if(!(neighborX1 >= 0 && neighborX1 < this.width && neighborY1 >= 0 && neighborY1 < this.height && this.costs.h.hasOwnProperty(this.world[neighborY1 * this.width + neighborX1]))) {
 			return false;
-		} else if((direction & (16 | 32 | 64 | 128)) <= 0) {
+		}
+		if(!this.costs.h[this.world[neighborY1 * this.width + neighborX1]].h.hasOwnProperty(direction)) {
+			return false;
+		}
+		if((direction & (16 | 32 | 64 | 128)) <= 0) {
 			return true;
-		} else if(this.movementDirection == 2) {
-			return true;
-		} else if(this.movementDirection == 4) {
-			var x1;
-			switch(direction) {
-			case 4:case 32:case 128:
-				x1 = 1;
-				break;
-			case 2:case 16:case 64:
-				x1 = -1;
-				break;
-			default:
-				x1 = 0;
-			}
-			var x2 = x + x1;
-			if(!(x2 >= 0 && x2 < this.width && y >= 0 && y < this.height && this.costs.h.hasOwnProperty(this.world[y * this.width + x2]))) {
-				var y1;
-				switch(direction) {
-				case 1:case 16:case 32:
-					y1 = 1;
-					break;
-				case 8:case 64:case 128:
-					y1 = -1;
-					break;
-				default:
-					y1 = 0;
-				}
-				var y2 = y + y1;
-				if(x >= 0 && x < this.width && y2 >= 0 && y2 < this.height) {
-					return this.costs.h.hasOwnProperty(this.world[y2 * this.width + x]);
-				} else {
-					return false;
-				}
-			} else {
-				return true;
-			}
-		} else if(this.movementDirection == 8) {
-			var x3;
-			switch(direction) {
-			case 4:case 32:case 128:
-				x3 = 1;
-				break;
-			case 2:case 16:case 64:
-				x3 = -1;
-				break;
-			default:
-				x3 = 0;
-			}
-			var x4 = x + x3;
-			if(x4 >= 0 && x4 < this.width && y >= 0 && y < this.height && this.costs.h.hasOwnProperty(this.world[y * this.width + x4])) {
-				var y3;
-				switch(direction) {
-				case 1:case 16:case 32:
-					y3 = 1;
-					break;
-				case 8:case 64:case 128:
-					y3 = -1;
-					break;
-				default:
-					y3 = 0;
-				}
-				var y4 = y + y3;
-				if(x >= 0 && x < this.width && y4 >= 0 && y4 < this.height) {
-					return this.costs.h.hasOwnProperty(this.world[y4 * this.width + x]);
-				} else {
-					return false;
-				}
-			} else {
-				return false;
-			}
 		} else {
-			throw new js__$Boot_HaxeError("Should not be here");
+			switch(this.movementDirection) {
+			case 2:
+				return true;
+			case 4:
+				if(!(neighborX1 >= 0 && neighborX1 < this.width && y >= 0 && y < this.height && this.costs.h.hasOwnProperty(this.world[y * this.width + neighborX1]))) {
+					if(x >= 0 && x < this.width && neighborY1 >= 0 && neighborY1 < this.height) {
+						return this.costs.h.hasOwnProperty(this.world[neighborY1 * this.width + x]);
+					} else {
+						return false;
+					}
+				} else {
+					return true;
+				}
+				break;
+			case 8:
+				if(neighborX1 >= 0 && neighborX1 < this.width && y >= 0 && y < this.height && this.costs.h.hasOwnProperty(this.world[y * this.width + neighborX1])) {
+					if(x >= 0 && x < this.width && neighborY1 >= 0 && neighborY1 < this.height) {
+						return this.costs.h.hasOwnProperty(this.world[neighborY1 * this.width + x]);
+					} else {
+						return false;
+					}
+				} else {
+					return false;
+				}
+				break;
+			default:
+				throw new js__$Boot_HaxeError("Checking a diagonal direction in FourWay movement.");
+			}
 		}
 	}
 	,getMinCost: function(directions) {
